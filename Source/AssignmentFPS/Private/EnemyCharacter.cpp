@@ -5,28 +5,28 @@
 #include "TimerManager.h"
 #include "GameFramework/Controller.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "F:\UnrealProjects\AssignmentFPS\Source\AssignmentFPS\AssignmentFPSGameMode.h"
 
 AEnemyCharacter::AEnemyCharacter()
 {
 	PrimaryActorTick.bCanEverTick = true;
 
+	MaxHealth = 100.f;
 	Health = 100.f;
 	AttackRange = 800.f;
 	bCanAttack = true;
 	bInAttackRange = false;
 
-	// 创建武器组件，使用已有的 TP_WeaponComponent（在敌人中也可以直接使用）
+	// 创建武器组件，使用已有的 TP_WeaponComponent
 	WeaponComponent = CreateDefaultSubobject<UTP_WeaponComponent>(TEXT("WeaponComponent"));
-	// 注意：对于敌人，我们不会绑定输入，而是在 AI 逻辑中直接调用 Fire()
-
-	// 若需要调整角色移动速度，可在这里设置 GetCharacterMovement() 参数
+	
 }
 
 void AEnemyCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
-	// 将武器附加到敌人的骨骼上（假设骨骼上有 "WeaponSocket" 插槽）
+	// 将武器附加到敌人的骨骼上
 	if (WeaponComponent)
 	{
 		FAttachmentTransformRules AttachRules(EAttachmentRule::SnapToTarget, true);
@@ -40,7 +40,8 @@ void AEnemyCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	// 获取玩家（假设玩家索引为0）
+
+	// 获取玩家
 	APawn* PlayerPawn = UGameplayStatics::GetPlayerPawn(GetWorld(), 0);
 	if (!PlayerPawn)
 	{
@@ -75,6 +76,8 @@ void AEnemyCharacter::Tick(float DeltaTime)
 			StartAttackTimer();
 		}
 	}
+
+	UE_LOG(LogTemp, Log, TEXT("Distance to player: %f"), Distance);
 }
 
 void AEnemyCharacter::MoveToPlayer()
@@ -82,7 +85,7 @@ void AEnemyCharacter::MoveToPlayer()
 	APawn* PlayerPawn = UGameplayStatics::GetPlayerPawn(GetWorld(), 0);
 	if (PlayerPawn)
 	{
-		// 使用简单寻路（要求关卡中设置好 Nav Mesh Volume）
+		// 使用简单寻路
 		UAIBlueprintHelperLibrary::SimpleMoveToActor(GetController(), PlayerPawn);
 	}
 }
@@ -107,29 +110,32 @@ void AEnemyCharacter::AttackPlayer()
 	{
 		// 调用武器组件的 Fire() 开火
 		WeaponComponent->Fire();
-		// 这里由定时器保证每秒调用一次，无需额外设置冷却
+
 	}
 }
 
 float AEnemyCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent,
 	AController* EventInstigator, AActor* DamageCauser)
 {
-	// 可调用父类处理
 	float ActualDamage = Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
 	Health -= DamageAmount;
 
-	// 每次受击扣20血（这里 DamageAmount 应该为20），当血量低于等于0时销毁敌人
+	// 每次受击扣20血，当血量低于等于0时销毁敌人
 	if (Health <= 0.f)
 	{
-		// 此处可扩展播放死亡特效、触发游戏胜利逻辑等
+		AAssignmentFPSGameMode* GM = Cast<AAssignmentFPSGameMode>(UGameplayStatics::GetGameMode(GetWorld()));
+		if (GM)
+		{
+			GM->Victory();  // 在 GameMode 中实现 Victory() 函数，用于处理胜利逻辑
+		}
 		Destroy();
 	}
+
 
 	return ActualDamage;
 }
 
 void AEnemyCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
-	// 敌人不需要输入绑定
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 }

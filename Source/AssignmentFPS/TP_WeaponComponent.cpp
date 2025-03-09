@@ -28,7 +28,7 @@ void UTP_WeaponComponent::Fire()
 	}
 
 	FRotator SpawnRotation;
-	// 如果角色是玩家，则使用玩家摄像机的旋转；否则（例如敌人）使用角色正前方
+	// 如果角色是玩家，则使用玩家摄像机的旋转；如果是敌人, 使用角色正前方
 	if (Character->IsA(AAssignmentFPSCharacter::StaticClass()))
 	{
 		AAssignmentFPSCharacter* PlayerChar = Cast<AAssignmentFPSCharacter>(Character);
@@ -74,7 +74,7 @@ void UTP_WeaponComponent::Fire()
 
 void UTP_WeaponComponent::AttachWeapon(AAssignmentFPSCharacter* TargetCharacter)
 {
-	// 这里我们将 Character 赋值给通用的 ACharacter* 变量
+	// 将 Character 赋值给通用的 ACharacter* 变量
 	Character = TargetCharacter;
 
 	// 如果角色是玩家，则调用玩家专用逻辑
@@ -87,7 +87,7 @@ void UTP_WeaponComponent::AttachWeapon(AAssignmentFPSCharacter* TargetCharacter)
 			return;
 		}
 
-		// 将武器附加到玩家的第一人称 Mesh 上（假设该插槽名称为 "GripPoint"）
+		// 将武器附加到玩家的第一人称 Mesh 上
 		FAttachmentTransformRules AttachmentRules(EAttachmentRule::SnapToTarget, true);
 		AttachToComponent(PlayerChar->GetMesh1P(), AttachmentRules, FName(TEXT("GripPoint")));
 
@@ -110,10 +110,9 @@ void UTP_WeaponComponent::AttachWeapon(AAssignmentFPSCharacter* TargetCharacter)
 	}
 	else
 	{
-		// 如果不是玩家（例如敌人），直接附加到默认 Mesh 的 "WeaponSocket" 插槽上
+		// 如果是敌人，直接附加到默认 Mesh 的 "WeaponSocket" 插槽上
 		FAttachmentTransformRules AttachmentRules(EAttachmentRule::SnapToTarget, true);
 		AttachToComponent(Character->GetMesh(), AttachmentRules, FName(TEXT("WeaponSocket")));
-		// 对于敌人，不需要绑定输入，也不需要设置 GetHasRifle/SetHasRifle
 	}
 }
 
